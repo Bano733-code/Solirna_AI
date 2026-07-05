@@ -6,10 +6,12 @@ from app.services.memory_service import (
     get_recent_memories,
 )
 
-from app.services.fireworks_service import generate_response
+from app.services.fireworks_service import FireworksClient
 from app.agents.router import route_query
 
 logger = logging.getLogger(__name__)
+
+fireworks = FireworksClient()
 
 
 def chat_with_ai(
