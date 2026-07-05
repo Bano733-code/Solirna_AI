@@ -1,11 +1,15 @@
 from sqlalchemy.orm import Session
+import logging
 
 from app.services.memory_service import (
     save_memory,
     get_recent_memories,
 )
 
-from app.services.groq_service import generate_response
+from app.services.fireworks_service import generate_response
+from app.agents.router import route_query
+
+logger = logging.getLogger(__name__)
 
 
 def chat_with_ai(
@@ -17,6 +21,7 @@ def chat_with_ai(
     Main AI chat workflow.
     """
 
+    # Retrieve previous conversations
     memories = get_recent_memories(
         db=db,
         user_id=user_id,
@@ -31,11 +36,23 @@ def chat_with_ai(
             f"Assistant: {memory.ai_response}\n\n"
         )
 
+    # AI Agent decides which model to use
+    decision = route_query(user_message)
+
+    logger.info(
+        f"Model Selected: {decision['model']} | "
+        f"Reason: {decision['reason']}"
+    )
+
+    # Generate AI response
     ai_response = generate_response(
         user_message=user_message,
         memory_context=memory_context,
+        model=decision["model"],
+        max_tokens=decision["max_tokens"],
     )
 
+    # Save conversation
     save_memory(
         db=db,
         user_id=user_id,
@@ -48,7 +65,7 @@ def chat_with_ai(
 
 def generate_prd(title: str, idea: str) -> str:
     """
-    Generate a Product Requirements Document (PRD).
+    Generate a Product Requirements Document.
     """
 
     prompt = f"""
@@ -78,10 +95,20 @@ The PRD should include:
 Return the result in Markdown.
 """
 
+    decision = route_query(prompt)
+
+    logger.info(
+        f"PRD Model: {decision['model']}"
+    )
+
     return generate_response(
         user_message=prompt,
-        memory_context=""
+        memory_context="",
+        model=decision["model"],
+        max_tokens=decision["max_tokens"],
     )
+
+
 def generate_pitchdeck(title: str, startup_idea: str) -> str:
     """
     Generate a startup pitch deck.
@@ -116,7 +143,15 @@ Generate the following sections:
 Return the output in Markdown.
 """
 
+    decision = route_query(prompt)
+
+    logger.info(
+        f"Pitch Deck Model: {decision['model']}"
+    )
+
     return generate_response(
         user_message=prompt,
-        memory_context=""
+        memory_context="",
+        model=decision["model"],
+        max_tokens=decision["max_tokens"],
     )
