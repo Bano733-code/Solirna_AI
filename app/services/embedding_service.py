@@ -1,13 +1,19 @@
-from sentence_transformers import SentenceTransformer
+import requests
+from app.config import settings
 
-# Load the embedding model only once
-model = SentenceTransformer("BAAI/bge-large-en-v1.5")
+def create_embedding(text: str):
 
+    response = requests.post(
+        "https://api.fireworks.ai/inference/v1/embeddings",
+        headers={
+            "Authorization": f"Bearer {settings.FIREWORKS_API_KEY}"
+        },
+        json={
+            "model": settings.EMBEDDING_MODEL,
+            "input": text
+        }
+    )
 
-def create_embedding(text: str) -> list[float]:
-    """
-    Generate a 384-dimensional embedding for the given text.
-    """
-    embedding = model.encode(text)
+    response.raise_for_status()
 
-    return embedding.tolist()
+    return response.json()["data"][0]["embedding"]
