@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 
 # Load the embedding model only once
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("BAAI/bge-large-en-v1.5")
 
 
 def create_embedding(text: str) -> list[float]:
