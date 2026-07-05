@@ -1,20 +1,27 @@
-fastapi==0.138.1
-uvicorn==0.49.0
+fastapi
+uvicorn
 gunicorn
 
-SQLAlchemy==2.0.51
-psycopg2-binary==2.9.12
-pgvector==0.4.2
+sqlalchemy
+psycopg2-binary
+pgvector
 
-pydantic==2.13.4
-pydantic-settings==2.14.2
+pydantic
+pydantic-settings
 
-python-jose==3.5.0
-passlib==1.7.4
-bcrypt==4.1.3
+python-jose
+passlib
+bcrypt
 
-python-multipart==0.0.32
-email-validator==2.3.0
+python-multipart
+email-validator
 
 requests
-huggingface_hub==1.21.0
+
+sentence-transformers
+transformers
+torch
+huggingface_hub
+
+numpy
+scipy
