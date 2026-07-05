@@ -4,7 +4,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
 
 
-# PostgreSQL Engine
+# PostgreSQL Engine 
 engine = create_engine(
     settings.DATABASE_URL,
     echo=True  # Shows SQL queries in the terminal (useful while developing)
