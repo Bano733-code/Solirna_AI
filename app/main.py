@@ -5,7 +5,7 @@ from app.models.user import User
 from app.models.company import Company
 from app.routers import auth
 from app.routers import companies
-from app.models.chat_memory import ChatMemory
+from app.models.chat_memory import ChatMemory 
 from app.routers import chat
 from app.routers import prd
 from app.models.prd import PRD
