@@ -2,23 +2,16 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-#from app.dependencies import get_current_user
-
 from app.security import get_current_user
-
 from app.models.pitchdeck import PitchDeck
 from app.models.user import User
+from app.schemas.pitchdeck import PitchDeckRequest, PitchDeckResponse
 
-from app.schemas.pitchdeck import (
-    PitchDeckRequest,
-    PitchDeckResponse
-)
-
-from app.services.ai_service import generate_pitchdeck
+from app.agents.doc_agent import run_doc_agent
 
 router = APIRouter(
     prefix="/pitchdeck",
-    tags=["Pitch Deck"]
+    tags=["PitchDeck"]
 )
 
 
@@ -29,20 +22,26 @@ def create_pitchdeck(
     current_user: User = Depends(get_current_user)
 ):
 
-    pitch = generate_pitchdeck(
-        request.title,
-        request.startup_idea
+    user_message = f"""
+Startup Name: {request.title}
+
+Idea: {request.startup_idea}
+"""
+
+    pitchdeck_text = run_doc_agent(
+        user_message=user_message,
+        doc_type="Pitch Deck"
     )
 
-    deck = PitchDeck(
+    pitch = PitchDeck(
         title=request.title,
         startup_idea=request.startup_idea,
-        generated_pitch=pitch,
+        generated_pitch=pitchdeck_text,
         user_id=current_user.id
     )
 
-    db.add(deck)
+    db.add(pitch)
     db.commit()
-    db.refresh(deck)
+    db.refresh(pitch)
 
-    return deck
+    return pitch
