@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
 
 from app.config import settings
 
@@ -11,10 +11,10 @@ client = QdrantClient(
 COLLECTION = settings.QDRANT_COLLECTION
 
 
+# -----------------------------
+# CREATE COLLECTION
+# -----------------------------
 def create_collection():
-    """
-    Creates the collection if it doesn't already exist.
-    """
     collections = client.get_collections().collections
     names = [c.name for c in collections]
 
@@ -28,10 +28,18 @@ def create_collection():
         )
 
 
-def upload_memory(memory_id, embedding, payload):
+# -----------------------------
+# STORE MEMORY
+# -----------------------------
+def upload_memory(memory_id: str, embedding: list, payload: dict):
     """
-    Store an embedding with its metadata.
+    Store memory in Qdrant with metadata.
+    Payload MUST include:
+    - user_id
+    - text
+    - type (chat/prd/pitch)
     """
+
     client.upsert(
         collection_name=COLLECTION,
         points=[
@@ -44,14 +52,26 @@ def upload_memory(memory_id, embedding, payload):
     )
 
 
-def search_memories(query_embedding, limit=5):
+# -----------------------------
+# SEARCH MEMORY (FIXED)
+# -----------------------------
+def search_memories(user_id: int, query_embedding: list, limit: int = 5):
     """
-    Retrieve the most similar memories.
+    Retrieve ONLY user-specific memories (IMPORTANT FIX)
     """
+
     results = client.search(
         collection_name=COLLECTION,
         query_vector=query_embedding,
         limit=limit,
+        query_filter=Filter(
+            must=[
+                FieldCondition(
+                    key="user_id",
+                    match=MatchValue(value=user_id)
+                )
+            ]
+        ),
     )
 
     return results
