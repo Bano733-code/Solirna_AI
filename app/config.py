@@ -20,6 +20,11 @@ class Settings(BaseSettings):
 
     LLM_MODEL: str = "accounts/fireworks/models/llama-v3p1-8b-instruct"
 
+    # ✅ ADD THESE (Qdrant)
+    QDRANT_URL: str
+    QDRANT_API_KEY: str
+    QDRANT_COLLECTION: str = "solirna_memory"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
