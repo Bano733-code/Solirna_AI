@@ -1,4 +1,15 @@
-from app.agents.cost_optimizer import estimate_complexity
+try:
+    from app.agents.cost_optimizer import estimate_complexity
+except Exception:
+    def estimate_complexity(message: str):
+        length = len(message)
+
+        if length < 50:
+            return "low"
+        elif length < 200:
+            return "medium"
+        else:
+            return "high"
 
 
 def route_query(message: str):
