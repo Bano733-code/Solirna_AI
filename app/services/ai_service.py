@@ -1,52 +1,57 @@
 from sqlalchemy.orm import Session
 import logging
-
-from app.services.memory_service import (
-    save_memory,
-    get_recent_memories,
-)
+import uuid
 
 from app.services.fireworks_service import FireworksClient
 from app.agents.router import route_query
+
+from app.services.embedding_service import create_embedding
+from app.services.qdrant_service import search_memories, upload_memory
 
 logger = logging.getLogger(__name__)
 
 fireworks = FireworksClient()
 
 
+# -----------------------------
+# MAIN CHAT FUNCTION (RAG + AGENT)
+# -----------------------------
 def chat_with_ai(
     db: Session,
     user_id: int,
     user_message: str,
 ):
     """
-    Main AI chat workflow.
+    Main AI chat workflow with:
+    - Agent routing
+    - Qdrant memory retrieval (RAG)
+    - Fireworks generation
+    - Memory storage
     """
 
-    # Retrieve previous conversations
-    memories = get_recent_memories(
-        db=db,
+    # STEP 1: Route query to best model
+    decision = route_query(user_message)
+
+    logger.info(
+        f"Model Selected: {decision['model']} | Reason: {decision['reason']}"
+    )
+
+    # STEP 2: Create embedding for query
+    query_embedding = create_embedding(user_message)
+
+    # STEP 3: Retrieve relevant memories from Qdrant (REAL RAG)
+    memories = search_memories(
         user_id=user_id,
-        limit=5,
+        query_embedding=query_embedding,
+        limit=5
     )
 
     memory_context = ""
 
-    for memory in memories:
-        memory_context += (
-            f"User: {memory.user_message}\n"
-            f"Assistant: {memory.ai_response}\n\n"
-        )
+    for m in memories:
+        memory_context += f"{m.payload.get('text')}\n\n"
 
-    # AI Agent decides which model to use
-    decision = route_query(user_message)
-
-    logger.info(
-        f"Model Selected: {decision['model']} | "
-        f"Reason: {decision['reason']}"
-    )
-
-    # Generate AI response
+    # STEP 4: Generate AI response
     ai_response = fireworks.generate_response(
         user_message=user_message,
         memory_context=memory_context,
@@ -54,21 +59,30 @@ def chat_with_ai(
         max_tokens=decision["max_tokens"],
     )
 
-    # Save conversation
-    save_memory(
-        db=db,
-        user_id=user_id,
-        user_message=user_message,
-        ai_response=ai_response,
+    # STEP 5: Create memory text
+    memory_text = f"User: {user_message}\nAssistant: {ai_response}"
+
+    # STEP 6: Embed memory
+    memory_embedding = create_embedding(memory_text)
+
+    # STEP 7: Store in Qdrant (LONG-TERM MEMORY)
+    upload_memory(
+        memory_id=str(uuid.uuid4()),
+        embedding=memory_embedding,
+        payload={
+            "user_id": user_id,
+            "text": memory_text,
+            "type": "chat"
+        }
     )
 
     return ai_response
 
 
+# -----------------------------
+# PRD GENERATOR
+# -----------------------------
 def generate_prd(title: str, idea: str) -> str:
-    """
-    Generate a Product Requirements Document.
-    """
 
     prompt = f"""
 You are an expert Product Manager.
@@ -81,8 +95,7 @@ Product Title:
 Product Idea:
 {idea}
 
-The PRD should include:
-
+Include:
 1. Executive Summary
 2. Problem Statement
 3. Goals
@@ -94,14 +107,12 @@ The PRD should include:
 9. Success Metrics
 10. Future Improvements
 
-Return the result in Markdown.
+Return in Markdown format.
 """
 
     decision = route_query(prompt)
 
-    logger.info(
-        f"PRD Model: {decision['model']}"
-    )
+    logger.info(f"PRD Model: {decision['model']}")
 
     return fireworks.generate_response(
         user_message=prompt,
@@ -111,10 +122,10 @@ Return the result in Markdown.
     )
 
 
+# -----------------------------
+# PITCH DECK GENERATOR
+# -----------------------------
 def generate_pitchdeck(title: str, startup_idea: str) -> str:
-    """
-    Generate a startup pitch deck.
-    """
 
     prompt = f"""
 You are an expert startup consultant.
@@ -127,8 +138,7 @@ Startup Name:
 Startup Idea:
 {startup_idea}
 
-Generate the following sections:
-
+Include:
 1. Problem
 2. Solution
 3. Market Opportunity
@@ -142,14 +152,12 @@ Generate the following sections:
 11. Funding Requirement
 12. Closing Statement
 
-Return the output in Markdown.
+Return in Markdown format.
 """
 
     decision = route_query(prompt)
 
-    logger.info(
-        f"Pitch Deck Model: {decision['model']}"
-    )
+    logger.info(f"Pitch Deck Model: {decision['model']}")
 
     return fireworks.generate_response(
         user_message=prompt,
