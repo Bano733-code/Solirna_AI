@@ -27,7 +27,7 @@ class FireworksClient:
 
         messages = []
 
-        # Add memory as system context
+        # Memory context
         if memory_context:
             messages.append({
                 "role": "system",
@@ -40,16 +40,31 @@ class FireworksClient:
         })
 
         payload = {
-            "model": model or self.default_model,
+            "model": model if model else self.default_model,
             "messages": messages,
             "temperature": 0.7,
             "max_tokens": max_tokens,
         }
 
-        response = requests.post(url, json=payload, headers=headers)
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                headers=headers,
+                timeout=30
+            )
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Fireworks request failed: {str(e)}")
+            raise Exception("LLM service unavailable")
 
         if response.status_code != 200:
             logger.error(response.text)
             raise Exception(f"Fireworks API Error: {response.text}")
 
-        return response.json()["choices"][0]["message"]["content"]
+        data = response.json()
+
+        return (
+            data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+        )
