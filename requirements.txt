@@ -4,7 +4,7 @@ gunicorn
 
 sqlalchemy
 psycopg2-binary
-pgvector
+qdrant-client
 
 pydantic
 pydantic-settings
