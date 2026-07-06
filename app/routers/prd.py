@@ -2,17 +2,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-#from app.dependencies import get_current_user
 from app.security import get_current_user
 from app.models.prd import PRD
 from app.models.user import User
 
-from app.schemas.prd import (
-    PRDRequest,
-    PRDResponse
-)
+from app.schemas.prd import PRDRequest, PRDResponse
 
-from app.services.ai_service import generate_prd
+# ✅ NEW: agent import (NOT service anymore)
+from app.agents.doc_agent import run_doc_agent
 
 router = APIRouter(
     prefix="/prd",
@@ -27,11 +24,20 @@ def create_prd(
     current_user: User = Depends(get_current_user)
 ):
 
-    prd_text = generate_prd(
-        request.title,
-        request.idea
+    # STEP 1: build input for agent
+    user_message = f"""
+Title: {request.title}
+
+Idea: {request.idea}
+"""
+
+    # STEP 2: call doc agent (PRD generator)
+    prd_text = run_doc_agent(
+        user_message=user_message,
+        doc_type="PRD"
     )
 
+    # STEP 3: store in DB
     prd = PRD(
         title=request.title,
         idea=request.idea,
