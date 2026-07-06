@@ -47,7 +47,7 @@ def chat_with_ai(
     )
 
     # Generate AI response
-    ai_response = generate_response(
+    ai_response = fireworks.generate_response(
         user_message=user_message,
         memory_context=memory_context,
         model=decision["model"],
@@ -103,7 +103,7 @@ Return the result in Markdown.
         f"PRD Model: {decision['model']}"
     )
 
-    return generate_response(
+    return fireworks.generate_response(
         user_message=prompt,
         memory_context="",
         model=decision["model"],
@@ -151,7 +151,7 @@ Return the output in Markdown.
         f"Pitch Deck Model: {decision['model']}"
     )
 
-    return generate_response(
+    return fireworks.generate_response(
         user_message=prompt,
         memory_context="",
         model=decision["model"],
