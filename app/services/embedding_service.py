@@ -1,17 +1,21 @@
 import requests
 from app.config import settings
 
+EMBEDDING_URL = "https://api.fireworks.ai/inference/v1/embeddings"
+
+
 def create_embedding(text: str):
 
     response = requests.post(
-        "https://api.fireworks.ai/inference/v1/embeddings",
+        EMBEDDING_URL,
         headers={
             "Authorization": f"Bearer {settings.FIREWORKS_API_KEY}"
         },
         json={
             "model": settings.EMBEDDING_MODEL,
             "input": text
-        }
+        },
+        timeout=30,
     )
 
     response.raise_for_status()
