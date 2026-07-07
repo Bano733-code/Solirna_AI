@@ -18,3 +18,12 @@ class MemoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class ChatMessageResponse(BaseModel):
+    id: int
+    role: str
+    content: str
+    createdAt: str
+
+
+class ChatHistoryResponse(BaseModel):
+    messages: list[ChatMessageResponse]
