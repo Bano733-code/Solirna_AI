@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
@@ -22,6 +23,19 @@ from app.services.qdrant_service import create_collection
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0"
+)
+
+origins = [
+    "http://localhost:3000",
+    "https://solirnaai.vercel.app"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
