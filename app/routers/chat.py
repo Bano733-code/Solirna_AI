@@ -55,14 +55,14 @@ def get_chat_history(
             "id": f"{memory.id}-user",
             "role": "user",
             "content": memory.user_message,
-            "createdAt": memory.created_at
+            "createdAt": memory.created_at.isoformat()
         })
 
         messages.append({
             "id": f"{memory.id}-assistant",
             "role": "assistant",
             "content": memory.ai_response,
-            "createdAt": memory.created_at
+            "createdAt": memory.created_at.isoformat()
         })
 
 
