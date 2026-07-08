@@ -1,5 +1,12 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    Distance,
+    VectorParams,
+    PointStruct,
+    Filter,
+    FieldCondition,
+    MatchValue,
+)
 
 from app.config import settings
 
@@ -22,7 +29,7 @@ def create_collection():
         client.create_collection(
             collection_name=COLLECTION,
             vectors_config=VectorParams(
-                size=384,
+                size=384,   # ⚠️ Change this after checking len(create_embedding("hello"))
                 distance=Distance.COSINE,
             ),
         )
@@ -34,10 +41,11 @@ def create_collection():
 def upload_memory(memory_id: str, embedding: list, payload: dict):
     """
     Store memory in Qdrant with metadata.
-    Payload MUST include:
+
+    Payload should contain:
     - user_id
     - text
-    - type (chat/prd/pitch)
+    - type
     """
 
     client.upsert(
@@ -53,25 +61,29 @@ def upload_memory(memory_id: str, embedding: list, payload: dict):
 
 
 # -----------------------------
-# SEARCH MEMORY (FIXED)
+# SEARCH MEMORY
 # -----------------------------
-def search_memories(user_id: int, query_embedding: list, limit: int = 5):
+def search_memories(
+    user_id: int,
+    query_embedding: list,
+    limit: int = 5,
+):
     """
-    Retrieve ONLY user-specific memories (IMPORTANT FIX)
+    Search only memories belonging to the given user.
     """
 
-    results = client.search(
+    results = client.query_points(
         collection_name=COLLECTION,
-        query_vector=query_embedding,
+        query=query_embedding,
         limit=limit,
         query_filter=Filter(
             must=[
                 FieldCondition(
                     key="user_id",
-                    match=MatchValue(value=user_id)
+                    match=MatchValue(value=user_id),
                 )
             ]
         ),
     )
 
-    return results
+    return results.points
