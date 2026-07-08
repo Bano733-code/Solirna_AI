@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -8,7 +8,6 @@ from app.models.user import User
 
 from app.schemas.prd import PRDRequest, PRDResponse
 
-# ✅ NEW: agent import (NOT service anymore)
 from app.agents.doc_agent import run_doc_agent
 
 router = APIRouter(
@@ -17,6 +16,9 @@ router = APIRouter(
 )
 
 
+# ----------------------------
+# Create PRD
+# ----------------------------
 @router.post("/", response_model=PRDResponse)
 def create_prd(
     request: PRDRequest,
@@ -24,20 +26,17 @@ def create_prd(
     current_user: User = Depends(get_current_user)
 ):
 
-    # STEP 1: build input for agent
     user_message = f"""
 Title: {request.title}
 
 Idea: {request.idea}
 """
 
-    # STEP 2: call doc agent (PRD generator)
     prd_text = run_doc_agent(
         user_message=user_message,
         doc_type="PRD"
     )
 
-    # STEP 3: store in DB
     prd = PRD(
         title=request.title,
         idea=request.idea,
@@ -50,3 +49,57 @@ Idea: {request.idea}
     db.refresh(prd)
 
     return prd
+
+
+# ----------------------------
+# Get All PRDs
+# ----------------------------
+@router.get("/")
+def get_prds(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    prds = (
+        db.query(PRD)
+        .filter(PRD.user_id == current_user.id)
+        .order_by(PRD.created_at.desc())
+        .all()
+    )
+
+    return {
+        "prds": prds
+    }
+
+
+# ----------------------------
+# Delete PRD
+# ----------------------------
+@router.delete("/{prd_id}")
+def delete_prd(
+    prd_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    prd = (
+        db.query(PRD)
+        .filter(
+            PRD.id == prd_id,
+            PRD.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if prd is None:
+        raise HTTPException(
+            status_code=404,
+            detail="PRD not found"
+        )
+
+    db.delete(prd)
+    db.commit()
+
+    return {
+        "message": "PRD deleted successfully"
+    }
