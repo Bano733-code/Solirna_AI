@@ -10,10 +10,12 @@ from qdrant_client.models import (
 
 from app.config import settings
 
+
 client = QdrantClient(
     url=settings.QDRANT_URL,
     api_key=settings.QDRANT_API_KEY,
 )
+
 
 COLLECTION = settings.QDRANT_COLLECTION
 
@@ -22,31 +24,42 @@ COLLECTION = settings.QDRANT_COLLECTION
 # CREATE COLLECTION
 # -----------------------------
 def create_collection():
+
     collections = client.get_collections().collections
     names = [c.name for c in collections]
 
+
     if COLLECTION not in names:
+
         client.create_collection(
             collection_name=COLLECTION,
             vectors_config=VectorParams(
-                size=384,   # ⚠️ Change this after checking len(create_embedding("hello"))
+                # CHANGE THIS TO YOUR EMBEDDING SIZE
+                # qwen3-embedding-8b dimension
+                size=4096,
                 distance=Distance.COSINE,
             ),
         )
 
 
+    # Create payload index for user_id filtering
+    # Required for query_points filter
+    client.create_payload_index(
+        collection_name=COLLECTION,
+        field_name="user_id",
+        field_schema="integer",
+    )
+
+
+
 # -----------------------------
 # STORE MEMORY
 # -----------------------------
-def upload_memory(memory_id: str, embedding: list, payload: dict):
-    """
-    Store memory in Qdrant with metadata.
-
-    Payload should contain:
-    - user_id
-    - text
-    - type
-    """
+def upload_memory(
+    memory_id: str,
+    embedding: list,
+    payload: dict
+):
 
     client.upsert(
         collection_name=COLLECTION,
@@ -60,6 +73,7 @@ def upload_memory(memory_id: str, embedding: list, payload: dict):
     )
 
 
+
 # -----------------------------
 # SEARCH MEMORY
 # -----------------------------
@@ -68,9 +82,6 @@ def search_memories(
     query_embedding: list,
     limit: int = 5,
 ):
-    """
-    Search only memories belonging to the given user.
-    """
 
     results = client.query_points(
         collection_name=COLLECTION,
@@ -80,7 +91,9 @@ def search_memories(
             must=[
                 FieldCondition(
                     key="user_id",
-                    match=MatchValue(value=user_id),
+                    match=MatchValue(
+                        value=user_id
+                    ),
                 )
             ]
         ),
