@@ -21,20 +21,20 @@ def route_query(message: str):
 
     if complexity == "low":
         return {
-            "model": "accounts/fireworks/models/llama-v3p1-8b-instruct",
+            "model": "accounts/fireworks/models/models/glm-5p2",
             "max_tokens": 512,
             "reason": "Simple request",
         }
 
     elif complexity == "medium":
         return {
-            "model": "accounts/fireworks/models/llama-v3p1-70b-instruct",
+            "model": "accounts/fireworks/models/models/glm-5p2",
             "max_tokens": 1024,
             "reason": "Balanced reasoning",
         }
 
     return {
-        "model": "accounts/fireworks/models/llama-v3p1-70b-instruct",
+        "model": "accounts/fireworks/models/models/glm-5p2",
         "max_tokens": 2048,
         "reason": "Complex reasoning",
     }
