@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     EMBEDDING_MODEL: str = "BAAI/bge-large-en-v1.5"
 
-    LLM_MODEL: str = "accounts/fireworks/models/llama-v3p1-8b-instruct"
+    LLM_MODEL: str = "accounts/fireworks/models/glm-5p2"
 
     # ✅ ADD THESE (Qdrant)
     QDRANT_URL: str
