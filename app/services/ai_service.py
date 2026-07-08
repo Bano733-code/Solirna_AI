@@ -27,7 +27,7 @@ def chat_with_ai(db: Session, user_id: int, user_message: str):
     query_embedding = create_embedding(user_message)
 
     # STEP 3: Retrieve memory from Qdrant
-    memories = search_memories(query_embedding=query_embedding, limit=5)
+    memories = search_memories(user_id=user_id,query_embedding=query_embedding, limit=5)
 
     memory_context = "\n".join(
         [m.payload.get("text", "") for m in memories]
