@@ -1,7 +1,7 @@
 import requests
 from app.config import settings
 
-EMBEDDING_URL = "https://api.fireworks.ai/inference/v1/embeddings"
+EMBEDDING_URL = "https://api.fireworks.ai/inference/v1/rerank"
 
 
 def create_embedding(text: str):
