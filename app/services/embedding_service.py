@@ -21,6 +21,10 @@ def create_embedding(text: str):
     print("Status:", response.status_code)
     print("Response:", response.text)
 
+
+
     response.raise_for_status()
 
     return response.json()["data"][0]["embedding"]
+    print("VECTOR SIZE:", len(embedding))
+    return embedding
