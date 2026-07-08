@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     FIREWORKS_API_KEY: str
 
-    EMBEDDING_MODEL: str = "BAAI/bge-large-en-v1.5"
+    EMBEDDING_MODEL: str = "accounts/fireworks/models/qwen3-embedding-8b"
 
     LLM_MODEL: str = "accounts/fireworks/models/glm-5p2"
 
