@@ -10,12 +10,10 @@ from qdrant_client.models import (
 
 from app.config import settings
 
-
 client = QdrantClient(
     url=settings.QDRANT_URL,
     api_key=settings.QDRANT_API_KEY,
 )
-
 
 COLLECTION = settings.QDRANT_COLLECTION
 
@@ -24,32 +22,38 @@ COLLECTION = settings.QDRANT_COLLECTION
 # CREATE COLLECTION
 # -----------------------------
 def create_collection():
+    """
+    Creates a fresh collection using the correct vector size.
 
-    collections = client.get_collections().collections
-    names = [c.name for c in collections]
+    NOTE:
+    This deletes the old collection.
+    Use ONLY while fixing the vector dimension mismatch.
+    """
 
+    # Delete old collection if it exists
+    if client.collection_exists(COLLECTION):
+        print(f"Deleting old collection: {COLLECTION}")
+        client.delete_collection(COLLECTION)
 
-    if COLLECTION not in names:
+    # Create new collection
+    print(f"Creating collection: {COLLECTION}")
 
-        client.create_collection(
-            collection_name=COLLECTION,
-            vectors_config=VectorParams(
-                # CHANGE THIS TO YOUR EMBEDDING SIZE
-                # qwen3-embedding-8b dimension
-                size=4096,
-                distance=Distance.COSINE,
-            ),
-        )
+    client.create_collection(
+        collection_name=COLLECTION,
+        vectors_config=VectorParams(
+            size=4096,      # qwen3-embedding-8b dimension
+            distance=Distance.COSINE,
+        ),
+    )
 
-
-    # Create payload index for user_id filtering
-    # Required for query_points filter
+    # Create payload index
     client.create_payload_index(
         collection_name=COLLECTION,
         field_name="user_id",
         field_schema="integer",
     )
 
+    print("Collection created successfully.")
 
 
 # -----------------------------
@@ -58,7 +62,7 @@ def create_collection():
 def upload_memory(
     memory_id: str,
     embedding: list,
-    payload: dict
+    payload: dict,
 ):
 
     client.upsert(
@@ -71,7 +75,6 @@ def upload_memory(
             )
         ],
     )
-
 
 
 # -----------------------------
@@ -91,9 +94,7 @@ def search_memories(
             must=[
                 FieldCondition(
                     key="user_id",
-                    match=MatchValue(
-                        value=user_id
-                    ),
+                    match=MatchValue(value=user_id),
                 )
             ]
         ),
