@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class FireworksClient:
     def __init__(self):
         self.api_key = settings.FIREWORKS_API_KEY
-        self.base_url = "https://api.fireworks.ai/inference/v1/chat/completions"
+        self.base_url = "https://api.fireworks.ai/inference/v1"
         self.default_model = settings.LLM_MODEL
 
     def generate_response(
