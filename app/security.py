@@ -64,25 +64,20 @@ def get_current_user(
         status_code=401,
         detail="Could not validate credentials",
     )
-
     try:
         payload = jwt.decode(
             token.credentials,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
-
         user_id = payload.get("sub")
-
         if not user_id:
             raise credentials_exception
-
-    except JWTError:
+        user_id = int(user_id)  # moved inside try
+    except (JWTError, ValueError, TypeError):
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
-
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise credentials_exception
-
     return user
