@@ -28,6 +28,6 @@ Be brutally honest.
     return fireworks.generate_response(
         user_message=prompt,
         memory_context="",
-        model="accounts/fireworks/models/llama-v3p1-70b-instruct",
+        model="accounts/fireworks/models/glm-5p2",
         max_tokens=1200,
     )
